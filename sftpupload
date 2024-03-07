@@ -1,18 +1,13 @@
-CREATE TABLE transaction_event (
+CREATE TABLE position (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    source NVARCHAR(255),
-    tradeId NVARCHAR(255),
-    version INT,
-    type NVARCHAR(50),
+    type NVARCHAR(50) NOT NULL,
+    positionDate DATE NOT NULL,
     batsSecurityId NVARCHAR(255),
     bookId NVARCHAR(255),
-    buySell NVARCHAR(10),
     notional DECIMAL(18, 2),
-    unitPrice DECIMAL(18, 2),
-    currency NVARCHAR(3),
-    traderId NVARCHAR(255),
-    counterPartyId NVARCHAR(255),
-    tradeDateUTC DATETIME
+    averageCost DECIMAL(18, 2),
+    status NVARCHAR(50),
+    lastUpdate DATETIME
 );
 
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -21,23 +16,22 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.util.List;
 
-public interface TransactionEventDao {
-    
-    @SqlUpdate("INSERT INTO transaction_event (source, tradeId, version, type, batsSecurityId, bookId, buySell, notional, unitPrice, currency, traderId, counterPartyId, tradeDateUTC) " +
-               "VALUES (:source, :tradeId, :version, :type, :batsSecurityId, :bookId, :buySell, :notional, :unitPrice, :currency, :traderId, :counterPartyId, :tradeDateUTC)")
-    void insert(@BindBean TransactionEvent transactionEvent);
+public interface PositionDao {
 
-    @SqlQuery("SELECT * FROM transaction_event WHERE id = :id")
-    TransactionEvent findById(@Bind("id") int id);
+    @SqlUpdate("INSERT INTO position (type, positionDate, batsSecurityId, bookId, notional, averageCost, status, lastUpdate) " +
+               "VALUES (:type, :positionDate, :batsSecurityId, :bookId, :notional, :averageCost, :status, :lastUpdate)")
+    void insert(@BindBean Position position);
 
-    @SqlQuery("SELECT * FROM transaction_event")
-    List<TransactionEvent> findAll();
+    @SqlQuery("SELECT * FROM position WHERE id = :id")
+    Position findById(@Bind("id") int id);
 
-    @SqlUpdate("UPDATE transaction_event SET source = :source, tradeId = :tradeId, version = :version, type = :type, batsSecurityId = :batsSecurityId, bookId = :bookId, " +
-               "buySell = :buySell, notional = :notional, unitPrice = :unitPrice, currency = :currency, traderId = :traderId, counterPartyId = :counterPartyId, " +
-               "tradeDateUTC = :tradeDateUTC WHERE id = :id")
-    void update(@BindBean TransactionEvent transactionEvent);
+    @SqlQuery("SELECT * FROM position")
+    List<Position> findAll();
 
-    @SqlUpdate("DELETE FROM transaction_event WHERE id = :id")
+    @SqlUpdate("UPDATE position SET type = :type, positionDate = :positionDate, batsSecurityId = :batsSecurityId, bookId = :bookId, " +
+               "notional = :notional, averageCost = :averageCost, status = :status, lastUpdate = :lastUpdate WHERE id = :id")
+    void update(@BindBean Position position);
+
+    @SqlUpdate("DELETE FROM position WHERE id = :id")
     void deleteById(@Bind("id") int id);
 }
