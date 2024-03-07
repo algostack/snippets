@@ -1,47 +1,43 @@
-import com.jcraft.jsch.*;
+CREATE TABLE transaction_event (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    source NVARCHAR(255),
+    tradeId NVARCHAR(255),
+    version INT,
+    type NVARCHAR(50),
+    batsSecurityId NVARCHAR(255),
+    bookId NVARCHAR(255),
+    buySell NVARCHAR(10),
+    notional DECIMAL(18, 2),
+    unitPrice DECIMAL(18, 2),
+    currency NVARCHAR(3),
+    traderId NVARCHAR(255),
+    counterPartyId NVARCHAR(255),
+    tradeDateUTC DATETIME
+);
 
-import java.io.File;
-import java.util.Properties;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
-public class SftpFileUpload {
+import java.util.List;
 
-    public static void main(String[] args) {
-        String host = "your_sftp_server";
-        String username = "your_username";
-        String password = "your_password";
-        int port = 22; // Default SFTP port
+public interface TransactionEventDao {
+    
+    @SqlUpdate("INSERT INTO transaction_event (source, tradeId, version, type, batsSecurityId, bookId, buySell, notional, unitPrice, currency, traderId, counterPartyId, tradeDateUTC) " +
+               "VALUES (:source, :tradeId, :version, :type, :batsSecurityId, :bookId, :buySell, :notional, :unitPrice, :currency, :traderId, :counterPartyId, :tradeDateUTC)")
+    void insert(@BindBean TransactionEvent transactionEvent);
 
-        String localFilePath = "path/to/local/file.txt";
-        String remoteDirectory = "/path/on/remote/server/";
+    @SqlQuery("SELECT * FROM transaction_event WHERE id = :id")
+    TransactionEvent findById(@Bind("id") int id);
 
-        try {
-            JSch jsch = new JSch();
+    @SqlQuery("SELECT * FROM transaction_event")
+    List<TransactionEvent> findAll();
 
-            // Create a session
-            Session session = jsch.getSession(username, host, port);
-            session.setPassword(password);
+    @SqlUpdate("UPDATE transaction_event SET source = :source, tradeId = :tradeId, version = :version, type = :type, batsSecurityId = :batsSecurityId, bookId = :bookId, " +
+               "buySell = :buySell, notional = :notional, unitPrice = :unitPrice, currency = :currency, traderId = :traderId, counterPartyId = :counterPartyId, " +
+               "tradeDateUTC = :tradeDateUTC WHERE id = :id")
+    void update(@BindBean TransactionEvent transactionEvent);
 
-            // Disable strict host key checking (use only in a secure environment!)
-            Properties config = new Properties();
-            config.put("StrictHostKeyChecking", "no");
-            session.setConfig(config);
-
-            session.connect();
-
-            // Create a channel
-            ChannelSftp channel = (ChannelSftp) session.openChannel("sftp");
-            channel.connect();
-
-            // Upload file
-            channel.put(localFilePath, remoteDirectory);
-
-            // Disconnect
-            channel.disconnect();
-            session.disconnect();
-
-            System.out.println("File uploaded successfully.");
-        } catch (JSchException | SftpException e) {
-            e.printStackTrace();
-        }
-    }
+    @SqlUpdate("DELETE FROM transaction_event WHERE id = :id")
+    void deleteById(@Bind("id") int id);
 }
