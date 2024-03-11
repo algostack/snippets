@@ -1,37 +1,31 @@
-CREATE TABLE position (
-    id INT IDENTITY(1,1) PRIMARY KEY,
-    type NVARCHAR(50) NOT NULL,
-    positionDate DATE NOT NULL,
-    batsSecurityId NVARCHAR(255),
-    bookId NVARCHAR(255),
-    notional DECIMAL(18, 2),
-    averageCost DECIMAL(18, 2),
-    status NVARCHAR(50),
-    lastUpdate DATETIME
-);
+syntax = "proto3";
 
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
+// Enum for trade direction
+enum Direction {
+  BUY = 0;
+  SELL = 1;
+}
 
-import java.util.List;
+// Enum for trade type
+enum Type {
+  NEW = 0;
+  AMEND = 1;
+  CANCEL = 2;
+}
 
-public interface PositionDao {
-
-    @SqlUpdate("INSERT INTO position (type, positionDate, batsSecurityId, bookId, notional, averageCost, status, lastUpdate) " +
-               "VALUES (:type, :positionDate, :batsSecurityId, :bookId, :notional, :averageCost, :status, :lastUpdate)")
-    void insert(@BindBean Position position);
-
-    @SqlQuery("SELECT * FROM position WHERE id = :id")
-    Position findById(@Bind("id") int id);
-
-    @SqlQuery("SELECT * FROM position")
-    List<Position> findAll();
-
-    @SqlUpdate("UPDATE position SET type = :type, positionDate = :positionDate, batsSecurityId = :batsSecurityId, bookId = :bookId, " +
-               "notional = :notional, averageCost = :averageCost, status = :status, lastUpdate = :lastUpdate WHERE id = :id")
-    void update(@BindBean Position position);
-
-    @SqlUpdate("DELETE FROM position WHERE id = :id")
-    void deleteById(@Bind("id") int id);
+// TransactionEvent message definition
+message TransactionEvent {
+  string source = 1;
+  string tradeId = 2;
+  int32 version = 3;
+  Type type = 4;
+  string batsSecurityId = 5;
+  string bookId = 6;
+  string buySell = 7;
+  string notional = 8;
+  string unitPrice = 9;
+  string currency = 10;
+  string traderId = 11;
+  string counterPartyId = 12;
+  google.protobuf.Timestamp tradeDateUTC = 13;
 }
