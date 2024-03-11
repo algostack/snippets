@@ -13,19 +13,25 @@ enum Type {
   CANCEL = 2;
 }
 
+message DecimalValue {
+  uint32 scale = 1;
+  uint32 precision = 2;
+  bytes value = 3;
+}
+
 // TransactionEvent message definition
-message TransactionEvent {
-  string source = 1;
-  string tradeId = 2;
-  int32 version = 3;
-  Type type = 4;
-  string batsSecurityId = 5;
-  string bookId = 6;
-  string buySell = 7;
-  string notional = 8;
-  string unitPrice = 9;
-  string currency = 10;
-  string traderId = 11;
-  string counterPartyId = 12;
-  google.protobuf.Timestamp tradeDateUTC = 13;
+message TransactionEventMsg {
+  string tradeId = 1;
+  int32 version = 2;
+  Type type = 3;
+  string batsSecurityId = 4;
+  string book = 5;
+  Direction direction = 6;
+  DecimalValue notional = 7;
+  DecimalValue unitPrice = 8;
+  string currency = 9;
+  string traderId = 10;
+  string counterPartyId = 11;
+  google.protobuf.Timestamp tradeDateUTC = 12;
+  string source = 13;
 }
