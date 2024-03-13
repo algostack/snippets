@@ -1,37 +1,43 @@
-syntax = "proto3";
+@Configuration
+@Slf4j
+public class SolaceConfig {
 
-// Enum for trade direction
-enum Direction {
-  BUY = 0;
-  SELL = 1;
-}
 
-// Enum for trade type
-enum Type {
-  NEW = 0;
-  AMEND = 1;
-  CANCEL = 2;
-}
+    @Bean
+    @SneakyThrows
+    public SolConnectionFactory connectionFactory(@Value("${solace.broker.url}") String brokerUrl,
+                                                  @Value("${solace.broker.vpn-name}") String vpnName,
+                                                  @Value("${solace.client-username}") String username,
+                                                  @Value("${solace.client-password}") String password) {
+        return SolJmsUtility.createConnectionFactory(brokerUrl, vpnName, username, password, new Hashtable<>());
+    }
 
-message DecimalValue {
-  uint32 scale = 1;
-  uint32 precision = 2;
-  bytes value = 3;
-}
+    @Bean
+    public ConnectionFactory cachedConnectionFactory(SolConnectionFactory connectionFactory) {
+        CachingConnectionFactory cachingFactory = new CachingConnectionFactory(connectionFactory);
+        // Optional: Set cache size for sessions or message producers/consumers
+        cachingFactory.setSessionCacheSize(1); // Example cache size for sessions
+        return cachingFactory;
+    }
 
-// TransactionEvent message definition
-message TransactionEventMsg {
-  string tradeId = 1;
-  int32 version = 2;
-  Type type = 3;
-  string batsSecurityId = 4;
-  string book = 5;
-  Direction direction = 6;
-  DecimalValue notional = 7;
-  DecimalValue unitPrice = 8;
-  string currency = 9;
-  string traderId = 10;
-  string counterPartyId = 11;
-  google.protobuf.Timestamp tradeDateUTC = 12;
-  string source = 13;
+    @Bean
+    @SneakyThrows
+    public DefaultMessageListenerContainer transactionEventMessageListener(SolConnectionFactory connectionFactory,
+                                                                           @Value("${transaction.event.queue}") String queueName) {
+
+        final DefaultMessageListenerContainer container = new DefaultMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.setDestinationName(queueName);
+        container.setSessionAcknowledgeMode(SupportedProperty.SOL_CLIENT_ACKNOWLEDGE);
+        container.setMessageListener(new MessageListener() {
+            @Override
+            @SneakyThrows
+            public void onMessage(Message message) {
+                log.info("message: {}", message);
+            }
+        });
+        log.info("Subscribed to queue: {} mode is: CLIENT_ACKNOWLEDGE", queueName);
+        return container;
+    }
+
 }
